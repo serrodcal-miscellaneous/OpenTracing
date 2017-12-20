@@ -4,6 +4,8 @@ services:
     image: openzipkin/zipkin-mysql
     ports:
       - "3306:3306"
+    networks:
+      - opentracing
   zipkin:
     image: openzipkin/zipkin
     environment:
@@ -11,20 +13,26 @@ services:
       - MYSQL_HOST=mysql
     ports:
       - "9411:9411"
+    networks:
+      - opentracing
     depends_on:
       - mysql
   publisher:
     image: serrodcal/opentracing-publisher
     build: ./publisher
-    #volumes:
-    #  - ./publisher/:/opt/publisher/
+    volumes:
+      - ./publisher/:/home/
     ports:
       - "8082:8082"
       - "9082:9082"
+    networks:
+      - opentracing
     depends_on:
       - mysql
       - zipkin
-    entrypoint: ["mvn exec:java -Dexec.mainClass=\"Publisher\""]
-#command: /bin/sh -c && cd /opt/publisher && "mvn exec:java -Dexec.mainClass=\"Publisher\"" -Dexec.workingdir=\"/opt/publisher\"
-#formater:
-#hello:
+    command: tail -f /etc/hosts
+networks:
+  opentracing:
+    driver: bridge
+    #tail -f /etc/hosts
+    #entrypoint: ["mvn exec:java -Dexec.mainClass=\"Publisher\" -Dexec.workingdir=\"/home\""]
