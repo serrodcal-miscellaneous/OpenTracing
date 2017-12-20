@@ -1,0 +1,30 @@
+version: '2'
+services:
+  mysql:
+    image: openzipkin/zipkin-mysql
+    ports:
+      - "3306:3306"
+  zipkin:
+    image: openzipkin/zipkin
+    environment:
+      - STORAGE_TYPE=mysql
+      - MYSQL_HOST=mysql
+    ports:
+      - "9411:9411"
+    depends_on:
+      - mysql
+  publisher:
+    image: serrodcal/opentracing-publisher
+    build: ./publisher
+    #volumes:
+    #  - ./publisher/:/opt/publisher/
+    ports:
+      - "8082:8082"
+      - "9082:9082"
+    depends_on:
+      - mysql
+      - zipkin
+    entrypoint: ["mvn exec:java -Dexec.mainClass=\"Publisher\""]
+#command: /bin/sh -c && cd /opt/publisher && "mvn exec:java -Dexec.mainClass=\"Publisher\"" -Dexec.workingdir=\"/opt/publisher\"
+#formater:
+#hello:
