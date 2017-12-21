@@ -30,3 +30,12 @@ to send the information to Zipkin.
 
 For that, only run `docker-compose up` in root of this repository where
 it is the docker-compose.yml file.
+
+## Testint
+
+_Under construction_
+
+```
+$ curl 'http://localhost:8082/publish?helloStr=hi%20there'
+$ curl 'http://localhost:8082/format?helloTo=Sergio'
+```
