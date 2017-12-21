@@ -47,6 +47,21 @@ services:
       - mysql
       - zipkin
     command: java -jar java-docker-opentracing-poc-formatter-1.0-SNAPSHOT.jar server server.yml
+  hello:
+    image: serrodcal/opentracing-hello
+    build: ./hello
+    volumes:
+      - ./hello/server.yml:/server.yml
+      - ./hello/target/java-docker-opentracing-poc-hello-1.0-SNAPSHOT.jar:/java-docker-opentracing-poc-hello-1.0-SNAPSHOT.jar
+    ports:
+      - "8082:8082"
+      - "9082:9082"
+    networks:
+      - opentracing
+    depends_on:
+      - mysql
+      - zipkin
+    command: java -jar java-docker-opentracing-poc-hello-1.0-SNAPSHOT.jar server server.yml
 networks:
   opentracing:
     driver: bridge
