@@ -7,7 +7,11 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMapInjectAdapter;
+import io.opentracing.tag.Tags;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import zipkin2.reporter.AsyncReporter;
 import zipkin2.reporter.Reporter;
 import zipkin2.reporter.Sender;
@@ -20,6 +24,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -66,7 +71,7 @@ public class Hello {
     }
 
       @Override
-      public Iterator<Entry<String, String>> iterator() {
+      public Iterator<Map.Entry<String, String>> iterator() {
         throw new UnsupportedOperationException("carrier is write-only");
       }
 
@@ -78,7 +83,26 @@ public class Hello {
   }
 
   private String getHttp(int port, String path, String param, String value) {
-    return "";
+    Span span = tracer.buildSpan("get-http").start();
+    try {
+      HttpUrl url = new HttpUrl().Builder().scheme("http").host("localhost").port(port).addPathSegment(path)
+              .addQueryParameter(param, value).build();
+      Request.Builder requestBuilder = new Request.Builder().url(url);
+
+      Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
+      Tags.HTTP_METHOD.set(span, "GET");
+      Tags.HTTP_URL.set(span, url.toString());
+      tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new RequestBuilderCarrier(requestBuilder));
+
+      Request request = requestBuilder.build();
+      Response response = client.newCall(request).execute();
+      if (response.code() != 200) {
+        throw new RuntimeException("Bad HTTP result: " + response);
+      }
+      return response.body().string();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void sayHello(String helloTo, String greeting){
@@ -90,7 +114,7 @@ public class Hello {
     String helloStr = getHttp(8081, "format", "helloTo", helloTo);
   }
 
-  private printHello(String helloStr) {
+  private void printHello(String helloStr) {
     getHttp(8082, "publish", "helloStr", helloStr);
   }
 
