@@ -4,8 +4,10 @@ import com.google.common.collect.ImmutableMap;
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
 import io.dropwizard.setup.Environment;
-import io.opentracing.ActiveSpan;
+import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMapInjectAdapter;
 import zipkin2.reporter.AsyncReporter;
 import zipkin2.reporter.Reporter;
 import zipkin2.reporter.Sender;
@@ -18,6 +20,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class Publisher extends Application<Configuration> {
@@ -34,11 +38,14 @@ public class Publisher extends Application<Configuration> {
 
         @GET
         public String format(@QueryParam("helloStr") String helloStr, @Context HttpHeaders httpHeaders){
-            try(ActiveSpan span = tracer.activeSpan()){
-                System.out.println(helloStr);
-                span.log(ImmutableMap.of("event","println","value",helloStr));
-                return "published";
-            }
+            Span span = tracer.buildSpan("formatSpan").withTag("prueba","prueba2").start();
+
+            System.out.println(helloStr);
+            span.log(ImmutableMap.of("event","println","value",helloStr));
+
+            Map<String,String> map = new HashMap<>();
+            tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(map));
+            return "published";
         }
 
     }
@@ -49,14 +56,13 @@ public class Publisher extends Application<Configuration> {
     }
 
     public static void main(String[] args) throws Exception {
-        System.setProperty("dw.server.applicationConnectors[0].port", "8082");
-        System.setProperty("dw.server.adminConnectors[0].port", "9082");
-
-        Sender sender = OkHttpSender.create("http://zipkin:9411:/api/v2/spans");
+        //Zipkin configuration, using zipkin-sender-okhttp3 and brave-opentracing dependencies
+        Sender sender = OkHttpSender.create("http://zipkin:9411/api/v2/spans");
         Reporter spanReporter = AsyncReporter.create(sender);
         Tracing braveTracing = Tracing.newBuilder().localServiceName("publisher").spanReporter(spanReporter).build();
         Tracer tracer = BraveTracer.create(braveTracing);
 
+        //Init publisher server.
         new Publisher(tracer).run(args);
     }
 

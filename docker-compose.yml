@@ -21,6 +21,7 @@ services:
     image: serrodcal/opentracing-publisher
     build: ./publisher
     volumes:
+      - ./publisher/server.yml:/server.yml
       - ./publisher/target/java-docker-opentracing-poc-publisher-1.0-SNAPSHOT.jar:/java-docker-opentracing-poc-publisher-1.0-SNAPSHOT.jar
     ports:
       - "8082:8082"
@@ -30,7 +31,7 @@ services:
     depends_on:
       - mysql
       - zipkin
-    command: java -jar java-docker-opentracing-poc-publisher-1.0-SNAPSHOT.jar
+    command: java -jar java-docker-opentracing-poc-publisher-1.0-SNAPSHOT.jar server server.yml
 networks:
   opentracing:
     driver: bridge
