@@ -38,13 +38,15 @@ public class Publisher extends Application<Configuration> {
 
         @GET
         public String format(@QueryParam("helloStr") String helloStr, @Context HttpHeaders httpHeaders){
-            Span span = tracer.buildSpan("formatSpan").withTag("prueba","prueba2").start();
+            Span span = tracer.buildSpan("formatSpan").start();
 
             System.out.println(helloStr);
             span.log(ImmutableMap.of("event","println","value",helloStr));
 
             Map<String,String> map = new HashMap<>();
             tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(map));
+
+            span.finish();
             return "published";
         }
 
@@ -57,7 +59,7 @@ public class Publisher extends Application<Configuration> {
 
     public static void main(String[] args) throws Exception {
         //Zipkin configuration, using zipkin-sender-okhttp3 and brave-opentracing dependencies
-        Sender sender = OkHttpSender.create("http://zipkin:9411/api/v2/spans");
+        Sender sender = OkHttpSender.create("http://localhost:9411/api/v2/spans");
         Reporter spanReporter = AsyncReporter.create(sender);
         Tracing braveTracing = Tracing.newBuilder().localServiceName("publisher").spanReporter(spanReporter).build();
         Tracer tracer = BraveTracer.create(braveTracing);
