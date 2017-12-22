@@ -38,7 +38,7 @@ public class Publisher extends Application<Configuration> {
 
         @GET
         public String format(@QueryParam("helloStr") String helloStr, @Context HttpHeaders httpHeaders){
-            Span span = tracer.buildSpan("formatSpan").start();
+            Span span = tracer.buildSpan("formatSpan").withTag("component","java").start();
 
             System.out.println(helloStr);
             span.log(ImmutableMap.of("event","println","value",helloStr));
