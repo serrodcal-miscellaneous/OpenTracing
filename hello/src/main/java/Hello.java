@@ -74,12 +74,12 @@ public class Hello extends Application<Configuration> {
 
         }
 
-        private String getHttp(Tracer tracer, Span spanRoot, int port, String path, String param, String value) {
+        private String getHttp(Tracer tracer, Span spanRoot, String host, int port, String path, String param, String value) {
             Span span = tracer.buildSpan("get-http")
                   .asChildOf(spanRoot)
                   .start();
             try {
-                HttpUrl url = new HttpUrl.Builder().scheme("http").host("localhost").port(port).addPathSegment(path).addQueryParameter(param,value).build();
+                HttpUrl url = new HttpUrl.Builder().scheme("http").host(host).port(port).addPathSegment(path).addQueryParameter(param,value).build();
                 Request.Builder requestBuilder = new Request.Builder().url(url);
 
                 Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
@@ -104,12 +104,12 @@ public class Hello extends Application<Configuration> {
       }
 
       private String formatString(Tracer tracer, Span spanRoot, String helloTo) {
-          String helloStr = getHttp(tracer, spanRoot,8081, "format", "helloTo", helloTo);
+          String helloStr = getHttp(tracer, spanRoot, "formatter",8081, "format", "helloTo", helloTo);
           return helloStr;
       }
 
       private void printHello(Tracer tracer, Span spanRoot, String helloStr) {
-          getHttp(tracer, spanRoot, 8082, "publish", "helloStr", helloStr);
+          getHttp(tracer, spanRoot, "publisher", 8082, "publish", "helloStr", helloStr);
       }
 
       @GET
