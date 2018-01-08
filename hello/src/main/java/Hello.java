@@ -1,6 +1,7 @@
 import brave.Tracing;
 import brave.opentracing.BraveTracer;
 import com.google.common.collect.ImmutableMap;
+import io.dropwizard.Application;
 import io.dropwizard.Configuration;
 import io.dropwizard.setup.Environment;
 import io.opentracing.Span;
@@ -30,73 +31,73 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class Hello {
+public class Hello extends Application<Configuration> {
 
-  private final Tracing tracing;
-  private final OkHttpClient client;
+    private final Tracing tracing;
+    private final OkHttpClient client;
 
-  public Hello(){
-    Sender sender = OkHttpSender.create("http://zipkin:9411/api/v2/spans");
-    Reporter spanReporter = AsyncReporter.create(sender);
-    Tracing braveTracing = Tracing.newBuilder().localServiceName("hello").spanReporter(spanReporter).build();
-    this.tracing = braveTracing;
-    this.client = new OkHttpClient();
-  }
+    public Hello(){
+        Sender sender = OkHttpSender.create("http://zipkin:9411/api/v2/spans");
+        Reporter spanReporter = AsyncReporter.create(sender);
+        Tracing braveTracing = Tracing.newBuilder().localServiceName("hello").spanReporter(spanReporter).build();
+        this.tracing = braveTracing;
+        this.client = new OkHttpClient();
+    }
 
-  @Path("/hello")
-  @Produces(MediaType.TEXT_PLAIN)
-  public class HelloResource{
+    @Path("/hello")
+    @Produces(MediaType.TEXT_PLAIN)
+    public class HelloResource{
 
-      private final Tracing tracing;
+        private final Tracing tracing;
 
-      public HelloResource(Tracing tracing) {
-          this.tracing = tracing;
-      }
+        public HelloResource(Tracing tracing) {
+            this.tracing = tracing;
+        }
 
-      private static class RequestBuilderCarrier implements io.opentracing.propagation.TextMap {
+        private class RequestBuilderCarrier implements io.opentracing.propagation.TextMap {
 
-          private final Request.Builder builder;
+            private final Request.Builder builder;
 
-          RequestBuilderCarrier(Request.Builder builder) {
+            RequestBuilderCarrier(Request.Builder builder) {
               this.builder = builder;
-          }
+            }
 
-          @Override
-          public Iterator<Map.Entry<String, String>> iterator() {
-              throw new UnsupportedOperationException("carrier is write-only");
-          }
+            @Override
+            public Iterator<Map.Entry<String, String>> iterator() {
+                throw new UnsupportedOperationException("carrier is write-only");
+            }
 
-          @Override
-          public void put(String key, String value) {
+            @Override
+            public void put(String key, String value) {
               builder.addHeader(key, value);
-          }
+            }
 
-      }
+        }
 
-      private String getHttp(Tracer tracer, Span spanRoot, int port, String path, String param, String value) {
-          Span span = tracer.buildSpan("get-http")
+        private String getHttp(Tracer tracer, Span spanRoot, int port, String path, String param, String value) {
+            Span span = tracer.buildSpan("get-http")
                   .asChildOf(spanRoot)
                   .start();
-          try {
-              HttpUrl url = new HttpUrl().Builder().scheme("http").host("localhost").port(port).addPathSegment(path)
-                      .addQueryParameter(param, value).build();
-              Request.Builder requestBuilder = new Request.Builder().url(url);
+            try {
+                HttpUrl url = new HttpUrl().Builder().scheme("http").host("localhost").port(port).addPathSegment(path)
+                .addQueryParameter(param, value).build();
+                Request.Builder requestBuilder = new Request.Builder().url(url);
 
-              Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
-              Tags.HTTP_METHOD.set(span, "GET");
-              Tags.HTTP_URL.set(span, url.toString());
-              tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new RequestBuilderCarrier(requestBuilder));
+                Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
+                Tags.HTTP_METHOD.set(span, "GET");
+                Tags.HTTP_URL.set(span, url.toString());
+                tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new RequestBuilderCarrier(requestBuilder));
 
-              Request request = requestBuilder.build();
-              Response response = client.newCall(request).execute();
-              if (response.code() != 200) {
-                  throw new RuntimeException("Bad HTTP result: " + response);
-              }
-              return response.body().string();
-          } catch (IOException e) {
+                Request request = requestBuilder.build();
+                Response response = client.newCall(request).execute();
+                if (response.code() != 200) {
+                throw new RuntimeException("Bad HTTP result: " + response);
+                }
+                return response.body().string();
+            } catch (IOException e) {
               throw new RuntimeException(e);
-          }
-      }
+            }
+        }
 
       private void sayHello(Tracer tracer, Span spanRoot, String helloTo, String greeting){
           String helloStr = formatString(tracer, spanRoot, helloTo);
@@ -107,7 +108,7 @@ public class Hello {
           String helloStr = getHttp(tracer, spanRoot,8081, "format", "helloTo", helloTo);
       }
 
-      private void printHello(Tracer tracer, Span spanRoot String helloStr) {
+      private void printHello(Tracer tracer, Span spanRoot, String helloStr) {
           getHttp(tracer, spanRoot, 8082, "publish", "helloStr", helloStr);
       }
 
@@ -126,31 +127,22 @@ public class Hello {
           System.out.println(greeting);
           span.log(ImmutableMap.of("event","println","value",greeting));
 
-          this.sayHello(tracer, spanRoot, helloTo, greeting);
+          this.sayHello(tracer, span, helloTo, greeting);
 
           return "hello published";
       }
 
-  }
+    }
 
-  @Override
-  public void run(Configuration configuration, Environment environment) throws Exception{
-    environment.jersey().register(new HelloResource(this.tracing));
-  }
+    @Override
+    public void run(Configuration configuration, Environment environment) throws Exception{
+        environment.jersey().register(new HelloResource(this.tracing));
+    }
 
-  public static void main(String[] args) {
+      public static void main(String[] args) throws Exception {
 
-    //Zipkin configuration, using zipkin-sender-okhttp3 and brave-opentracing dependencies
-    /*Sender sender = OkHttpSender.create("http://zipkin:9411/api/v2/spans");
-    Reporter spanReporter = AsyncReporter.create(sender);
-    Tracing braveTracing = Tracing.newBuilder().localServiceName("hello").spanReporter(spanReporter).build();
-    Tracer tracer = BraveTracer.create(braveTracing);*/
+          new Hello().run(args);
 
-    //Init publisher server.
-    new Hello().run(args);
-
-
-
-  }
+      }
 
 }
