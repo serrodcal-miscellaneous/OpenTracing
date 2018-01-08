@@ -87,5 +87,21 @@
             <artifactId>zipkin-sender-okhttp3</artifactId>
             <version>${reporter.version}</version>
         </dependency>
+        <!-- Uno de estos arregla el problema de NoSuchMethodException -->
+        <dependency>
+            <groupId>io.zipkin.brave</groupId>
+            <artifactId>brave</artifactId>
+            <version>4.13.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.zipkin.java</groupId>
+            <artifactId>zipkin</artifactId>
+            <version>2.4.2</version>
+        </dependency>
+        <dependency>
+            <groupId>io.zipkin.reporter2</groupId>
+            <artifactId>zipkin-reporter</artifactId>
+            <version>2.2.2</version>
+        </dependency>
     </dependencies>
 </project>

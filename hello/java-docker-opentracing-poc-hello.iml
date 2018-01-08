@@ -97,16 +97,16 @@
     <orderEntry type="library" name="Maven: net.sourceforge.argparse4j:argparse4j:0.7.0" level="project" />
     <orderEntry type="library" name="Maven: org.eclipse.jetty.toolchain.setuid:jetty-setuid-java:1.0.3" level="project" />
     <orderEntry type="library" name="Maven: io.opentracing.brave:brave-opentracing:0.23.0" level="project" />
-    <orderEntry type="library" name="Maven: io.zipkin.brave:brave:4.9.2" level="project" />
-    <orderEntry type="library" name="Maven: io.zipkin.java:zipkin:2.2.2" level="project" />
     <orderEntry type="library" name="Maven: io.zipkin.brave:brave-tests:4.9.2" level="project" />
     <orderEntry type="library" name="Maven: junit:junit:4.12" level="project" />
     <orderEntry type="library" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
     <orderEntry type="library" name="Maven: org.assertj:assertj-core:3.8.0" level="project" />
     <orderEntry type="library" name="Maven: io.zipkin.reporter2:zipkin-sender-okhttp3:2.2.2" level="project" />
-    <orderEntry type="library" name="Maven: io.zipkin.reporter2:zipkin-reporter:2.2.2" level="project" />
     <orderEntry type="library" name="Maven: com.squareup.okhttp3:okhttp:3.9.1" level="project" />
     <orderEntry type="library" name="Maven: com.squareup.okio:okio:1.13.0" level="project" />
     <orderEntry type="library" name="Maven: io.zipkin.zipkin2:zipkin:2.4.2" level="project" />
+    <orderEntry type="library" name="Maven: io.zipkin.brave:brave:4.13.1" level="project" />
+    <orderEntry type="library" name="Maven: io.zipkin.java:zipkin:2.4.2" level="project" />
+    <orderEntry type="library" name="Maven: io.zipkin.reporter2:zipkin-reporter:2.2.2" level="project" />
   </component>
 </module>

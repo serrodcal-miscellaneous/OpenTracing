@@ -9,10 +9,10 @@ There are six containers:
 
 * MySQL (needed by Zipkin).
 * Zipkin.
-* Kafka.
-* Publisher application.
-* Formatter application.
-* Hello application.
+* Kafka (**Only in kafka branch**).
+* Publisher application (_Microservice_).
+* Formatter application (_Microservice_).
+* Hello application (_Microservice_).
 
 Hello is a main application which is responsible for the orchestration between
 services, in this case a Formatter and Publisher. Formatter is a Java application

@@ -20,7 +20,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
-import java.text.Normalizer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,7 +48,12 @@ public class Formatter extends Application<Configuration> {
             String helloStr = String.format("%s, %s!", greeting, helloTo);
             span.log(ImmutableMap.of("event", "string-format", "value", helloStr));
 
-            return "published";
+            Map<String,String> map = new HashMap<>();
+            tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(map));
+
+            span.finish();
+
+            return helloStr;
         }
 
     }
