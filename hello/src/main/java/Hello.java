@@ -79,8 +79,7 @@ public class Hello extends Application<Configuration> {
                   .asChildOf(spanRoot)
                   .start();
             try {
-                HttpUrl url = new HttpUrl().Builder().scheme("http").host("localhost").port(port).addPathSegment(path)
-                .addQueryParameter(param, value).build();
+                HttpUrl url = new HttpUrl.Builder().scheme("http").host("localhost").port(port).addPathSegment(path).addQueryParameter(param,value).build();
                 Request.Builder requestBuilder = new Request.Builder().url(url);
 
                 Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
@@ -106,6 +105,7 @@ public class Hello extends Application<Configuration> {
 
       private String formatString(Tracer tracer, Span spanRoot, String helloTo) {
           String helloStr = getHttp(tracer, spanRoot,8081, "format", "helloTo", helloTo);
+          return helloStr;
       }
 
       private void printHello(Tracer tracer, Span spanRoot, String helloStr) {
