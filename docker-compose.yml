@@ -6,18 +6,27 @@ services:
       - "3306:3306"
     networks:
       - opentracing
+  kafka-zookeeper:
+    image: openzipkin/zipkin-kafka
+    environment:
+      - KAFKA:ADVERTISED_HOST_NAME=192.168.99.100
+    ports:
+      - "2181:2181"
+      - "9092:9092"
   zipkin:
     image: openzipkin/zipkin
     environment:
       - STORAGE_TYPE=mysql
       - MYSQL_HOST=mysql
       - JAVA_OPTS=-Dlogging.level.zipkin=DEBUG -Dlogging.level.zipkin2=DEBUG
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-zookeeper:9092
     ports:
       - "9411:9411"
     networks:
       - opentracing
     depends_on:
       - mysql
+      - kafka-zookeeper
   publisher:
     image: serrodcal/opentracing-publisher
     build: ./publisher
