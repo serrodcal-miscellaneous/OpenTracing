@@ -103,5 +103,16 @@
           <artifactId>zipkin-reporter</artifactId>
           <version>2.2.2</version>
       </dependency>
+      <!-- Kafka -->
+      <!--dependency>
+          <groupId>io.opentracing.contrib</groupId>
+          <artifactId>opentracing-kafka-client</artifactId>
+          <version>0.0.6</version>
+      </dependency-->
+      <dependency>
+          <groupId>io.opentracing.contrib</groupId>
+          <artifactId>opentracing-kafka-streams</artifactId>
+          <version>0.0.6</version>
+      </dependency>
   </dependencies>
 </project>
