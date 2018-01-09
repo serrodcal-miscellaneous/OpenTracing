@@ -16,7 +16,7 @@ There are six containers:
 
 Hello is a main application which is responsible for the orchestration between
 services, in this case two microservices: Formatter and Publisher. Formatter is a Java application
-which receives an HTTP request with a name and returns _Hi, <name>_.
+which receives an HTTP request with a name and returns _Hi, name_.
 Publisher is a Java application which receives an HTTP request with a name and
 says hello.
 
@@ -31,11 +31,11 @@ to send the information to Zipkin.
 For that, only run `docker-compose up` in root of this repository where
 it is the docker-compose.yml file.
 
-## Testint
+## Testing
 
 For that, only run `$ curl 'http://localhost:8080/hello?helloTo=Sergio&greeting=Hola'`.
 
-After that, access to Zipkin in ´http://localhost:9411´ to see spans accross this small platform.
+After that, access to Zipkin in http://localhost:9411 to see spans accross this small platform.
 
 To test this services individually, run following commands:
 
