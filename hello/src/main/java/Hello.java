@@ -78,6 +78,11 @@ public class Hello extends Application<Configuration> {
         private String getHttp(Tracer tracer, Span spanRoot, String host, int port, String path, String param, String value) {
             Span span = tracer.buildSpan("get-http")
                   .asChildOf(spanRoot)
+                  .withTag("component","dropwizard")
+                  .withTag("peer.address", host)
+                  .withTag("peer.port", port)
+                  .withTag("peer.service", host)
+                  .withTag("span.kind","client")
                   .start();
             try {
                 HttpUrl url = new HttpUrl.Builder().scheme("http").host(host).port(port).addPathSegment(path).addQueryParameter(param,value).build();
@@ -91,7 +96,6 @@ public class Hello extends Application<Configuration> {
                 span.log(ImmutableMap.of("event","println","status","Request!"));
 
                 Request request = requestBuilder.build();
-                System.out.println(request.headers().toString());
                 Response response = client.newCall(request).execute();
                 if (response.code() != 200) {
                 throw new RuntimeException("Bad HTTP result: " + response);
@@ -121,10 +125,18 @@ public class Hello extends Application<Configuration> {
       public String format(@QueryParam("helloTo") String helloTo, @QueryParam("greeting") String greeting, @Context HttpHeaders httpHeaders){
           Tracer tracer = BraveTracer.create(this.tracing);
 
-          Span span = tracer.buildSpan("hello").withTag("prueba","prueba2").start();
+          StringBuilder sb = new StringBuilder();
+          sb.append("/hello?helloTo=");
+          sb.append(helloTo);
+          sb.append("&greeting=");
+          sb.append(greeting);
+          String helloToTag = sb.toString();
 
-          //Map<String,String> map = new HashMap<>();
-          //tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(map));
+          Span span = tracer.buildSpan("hello orchestator")
+                  .withTag("component","dropwizard")
+                  .withTag("http.method", "GET")
+                  .withTag("http.url",helloToTag)
+                  .start();
 
           System.out.println(helloTo);
           span.log(ImmutableMap.of("event","println","value",helloTo));

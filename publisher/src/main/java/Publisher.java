@@ -44,16 +44,22 @@ public class Publisher extends Application<Configuration> {
         public String format(@QueryParam("helloStr") String helloStr, @Context HttpHeaders httpHeaders){
             SpanContext spanContext = tracer.extract(Format.Builtin.HTTP_HEADERS,
                     new TextMapExtractAdapter(convertMultiToRegularMap(httpHeaders.getRequestHeaders())));
-            Span span = tracer.buildSpan("formatSpan")
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("/publish?helloStr=");
+            sb.append(helloStr);
+            String helloStrTag = sb.toString();
+
+            Span span = tracer.buildSpan("publishSpan")
                     .asChildOf(spanContext)
-                    .withTag("component","java")
+                    .withTag("component","dropwizard")
+                    .withTag("http.method", "GET")
+                    .withTag("http.url",helloStrTag)
+                    .withTag("span.kind","server")
                     .start();
 
             System.out.println(helloStr);
             span.log(ImmutableMap.of("event","println","value",helloStr));
-
-            //Map<String,String> map = new HashMap<>();
-            //tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(map));
 
             span.finish();
             return "published";

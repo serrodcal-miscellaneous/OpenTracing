@@ -43,9 +43,18 @@ public class Formatter extends Application<Configuration> {
         public String format(@QueryParam("helloTo") String helloTo, @Context HttpHeaders httpHeaders){
             SpanContext spanContext = tracer.extract(Format.Builtin.HTTP_HEADERS,
                     new TextMapExtractAdapter(convertMultiToRegularMap(httpHeaders.getRequestHeaders())));
-            Span span = tracer.buildSpan("greeting")
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("/hello?helloTo=");
+            sb.append(helloTo);
+            String helloToTag = sb.toString();
+
+            Span span = tracer.buildSpan("greetingSpan")
                     .asChildOf(spanContext)
-                    .withTag("prueba","prueba2")
+                    .withTag("component","dropwizard")
+                    .withTag("http.method", "GET")
+                    .withTag("http.url",helloToTag)
+                    .withTag("span.kind","server")
                     .start();
 
             String greeting = span.getBaggageItem("greeting");
@@ -56,9 +65,6 @@ public class Formatter extends Application<Configuration> {
 
             String helloStr = String.format("%s, %s!", greeting, helloTo);
             span.log(ImmutableMap.of("event", "string-format", "value", helloStr));
-
-            //Map<String,String> map = new HashMap<>();
-            //tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(map));
 
             span.finish();
 
