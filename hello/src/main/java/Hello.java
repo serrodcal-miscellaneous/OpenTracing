@@ -1,5 +1,6 @@
 import brave.Tracing;
 import brave.opentracing.BraveTracer;
+import ch.qos.logback.core.net.SyslogOutputStream;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
@@ -48,7 +49,7 @@ public class Hello extends Application<Configuration> {
     @Produces(MediaType.TEXT_PLAIN)
     public class HelloResource{
 
-        private final Tracing tracing;
+        private Tracing tracing;
 
         public HelloResource(Tracing tracing) {
             this.tracing = tracing;
@@ -87,11 +88,15 @@ public class Hello extends Application<Configuration> {
                 Tags.HTTP_URL.set(span, url.toString());
                 tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new RequestBuilderCarrier(requestBuilder));
 
+                span.log(ImmutableMap.of("event","println","status","Request!"));
+
                 Request request = requestBuilder.build();
+                System.out.println(request.headers().toString());
                 Response response = client.newCall(request).execute();
                 if (response.code() != 200) {
                 throw new RuntimeException("Bad HTTP result: " + response);
                 }
+                span.finish();
                 return response.body().string();
             } catch (IOException e) {
               throw new RuntimeException(e);
@@ -116,10 +121,10 @@ public class Hello extends Application<Configuration> {
       public String format(@QueryParam("helloTo") String helloTo, @QueryParam("greeting") String greeting, @Context HttpHeaders httpHeaders){
           Tracer tracer = BraveTracer.create(this.tracing);
 
-          Span span = tracer.buildSpan("helloSpan").withTag("prueba","prueba2").start();
+          Span span = tracer.buildSpan("hello").withTag("prueba","prueba2").start();
 
-          Map<String,String> map = new HashMap<>();
-          tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(map));
+          //Map<String,String> map = new HashMap<>();
+          //tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(map));
 
           System.out.println(helloTo);
           span.log(ImmutableMap.of("event","println","value",helloTo));
@@ -128,6 +133,8 @@ public class Hello extends Application<Configuration> {
           span.log(ImmutableMap.of("event","println","value",greeting));
 
           this.sayHello(tracer, span, helloTo, greeting);
+
+          span.finish();
 
           return "hello published";
       }

@@ -5,8 +5,10 @@ import io.dropwizard.Application;
 import io.dropwizard.Configuration;
 import io.dropwizard.setup.Environment;
 import io.opentracing.Span;
+import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.propagation.TextMapInjectAdapter;
 import zipkin2.reporter.AsyncReporter;
 import zipkin2.reporter.Reporter;
@@ -20,7 +22,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Formatter extends Application<Configuration> {
@@ -37,7 +41,12 @@ public class Formatter extends Application<Configuration> {
 
         @GET
         public String format(@QueryParam("helloTo") String helloTo, @Context HttpHeaders httpHeaders){
-            Span span = tracer.buildSpan("greeting").withTag("prueba","prueba2").start();
+            SpanContext spanContext = tracer.extract(Format.Builtin.HTTP_HEADERS,
+                    new TextMapExtractAdapter(convertMultiToRegularMap(httpHeaders.getRequestHeaders())));
+            Span span = tracer.buildSpan("greeting")
+                    .asChildOf(spanContext)
+                    .withTag("prueba","prueba2")
+                    .start();
 
             String greeting = span.getBaggageItem("greeting");
 
@@ -48,12 +57,30 @@ public class Formatter extends Application<Configuration> {
             String helloStr = String.format("%s, %s!", greeting, helloTo);
             span.log(ImmutableMap.of("event", "string-format", "value", helloStr));
 
-            Map<String,String> map = new HashMap<>();
-            tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(map));
+            //Map<String,String> map = new HashMap<>();
+            //tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(map));
 
             span.finish();
 
             return helloStr;
+        }
+
+        private Map<String, String> convertMultiToRegularMap(MultivaluedMap<String, String> m) {
+            Map<String, String> map = new HashMap<>();
+            if (m == null) {
+                return map;
+            }
+            for (Map.Entry<String, List<String>> entry : m.entrySet()) {
+                StringBuilder sb = new StringBuilder();
+                for (String s : entry.getValue()) {
+                    if (sb.length() > 0) {
+                        sb.append(',');
+                    }
+                    sb.append(s);
+                }
+                map.put(entry.getKey(), sb.toString());
+            }
+            return map;
         }
 
     }
